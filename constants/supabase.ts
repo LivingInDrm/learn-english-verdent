@@ -40,10 +40,16 @@ export interface SubmitRequest {
 }
 
 export interface SubmitResponse {
-  accuracyNote: string
-  detailScore: number
-  suggestedRevision: string
-  keywords: string[]
+  // 新字段
+  minimalFix?: string
+  microReason?: string
+  bestDescription?: string
+  encouragement?: string
+  // 保留旧字段以便向后兼容
+  accuracyNote?: string
+  detailScore?: number
+  suggestedRevision?: string
+  keywords?: string[]
   imageUrl: string | null
   attemptId: string
 }

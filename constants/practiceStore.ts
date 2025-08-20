@@ -7,10 +7,15 @@ export type FeedbackStatus = 'idle' | 'submitting' | 'text_ready' | 'completed' 
 
 // 反馈数据接口
 export interface FeedbackData {
-  accuracyNote: string
-  detailScore: number
-  suggestedRevision: string
-  keywords: string[]
+  minimalFix?: string
+  microReason?: string
+  bestDescription?: string
+  encouragement?: string
+  // 保留旧字段以便向后兼容
+  accuracyNote?: string
+  detailScore?: number
+  suggestedRevision?: string
+  keywords?: string[]
   imageUrl?: string | null
   attemptId?: string
 }
@@ -91,6 +96,11 @@ export const usePracticeStore = create<PracticeState>()(
         feedbackStatus: 'text_ready',
         isSubmitting: false,
         feedbackData: {
+          minimalFix: response.minimalFix,
+          microReason: response.microReason,
+          bestDescription: response.bestDescription,
+          encouragement: response.encouragement,
+          // 保留旧字段以便向后兼容
           accuracyNote: response.accuracyNote,
           detailScore: response.detailScore,
           suggestedRevision: response.suggestedRevision,
@@ -270,5 +280,5 @@ export const getCanRetry = (state: PracticeState): boolean => {
 }
 
 export const getCanSubmit = (state: PracticeState, wordCount: number): boolean => {
-  return !state.isSubmitting && wordCount >= 10
+  return !state.isSubmitting && wordCount >= 3
 }

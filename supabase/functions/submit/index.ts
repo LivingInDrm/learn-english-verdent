@@ -16,7 +16,7 @@ console.log('- All env vars:', Object.keys(Deno.env.toObject()))
 // 常量配置
 const EVAL_TIMEOUT_MS = 15000  // 增加到15秒
 const IMG_TIMEOUT_MS = 120000  // 2分钟
-const MIN_WORDS = 10
+const MIN_WORDS = 3
 const RATE_LIMIT_PER_MINUTE = 6
 
 // 创建Supabase客户端
@@ -32,10 +32,10 @@ interface SubmitRequest {
 }
 
 interface EvaluationResult {
-  accuracyNote: string
-  detailScore: number
-  suggestedRevision: string
-  keywords: string[]
+  minimalFix: string
+  microReason: string
+  bestDescription: string
+  encouragement: string
 }
 
 // 频控检查
@@ -83,17 +83,46 @@ async function evaluateText(text: string, sceneId: string): Promise<EvaluationRe
   console.log('Starting text evaluation...')
   console.log('Using OpenAI API Key:', OPENAI_API_KEY ? `${OPENAI_API_KEY.substring(0, 20)}...` : 'MISSING')
   
-  const systemPrompt = `You are an English language evaluator. 
-Given the user's description of a scene, evaluate it and provide feedback in JSON format.
-Score the detail richness (1–5), identify any missing or general details, 
-suggest a more accurate/natural revision, and extract key vocabulary.
+  const systemPrompt = `You are an English teacher and motivator.
+You will be given:
+- An image (ground truth).
+- A student's English description of the image.
+
+Your task is to give structured feedback that helps the student both improve accuracy and stay motivated.
+
+Always respond in four sections in this exact order:
+
+1. Minimal Fix
+Correct the student's sentence with the smallest possible changes to make it:
+- Grammatically correct
+- Natural (sounds like how a native speaker would say it)
+- Accurate (faithfully describes the given image content)
+Keep the original structure when possible.
+Highlight changes using bold for added/replaced words and strike-through for removed words.
+Output only one corrected sentence here.
+
+2. Micro Reason
+Explain what's wrong with the original version or why you made this correct.
+Use simple English + Chinese together so Chinese students can learn easily from it.
+
+3. Best Description
+Produce a completely new sentence that gives the most natural, fluent, and accurate description of the image, as a native English speaker would write it.
+Do not limit yourself to the user's original sentence.
+The goal is to model the best possible English description, concise and idiomatic.
+Output only one sentence.
+
+4. Encouragement
+Give a short and friendly message that makes the student feel good about their work.
+- Always point out something specific they did well.
+- Keep the tone warm and positive, so they feel encouraged to keep learning.
+- Only one sentence.
 
 Respond with valid JSON in this exact format:
 {
-  "accuracyNote": "Brief note about accuracy or missing details",
-  "detailScore": 4,
-  "suggestedRevision": "A more natural/detailed version of the description",
-  "keywords": ["key", "vocabulary", "words"]
+  "minimalFix": "The corrected sentence with **bold** for changes and ~~strikethrough~~ for removals",
+  "microReason": "Explanation in simple English + 中文",
+  "bestDescription": "A natural, native-speaker description",
+  "encouragement": "A warm, positive message"
 }`
 
   const userPrompt = `Scene ID: ${sceneId}
@@ -138,12 +167,8 @@ Please evaluate this description and provide feedback.`
     const evaluation = JSON.parse(content)
     
     // 验证必需字段
-    if (!evaluation.accuracyNote || !evaluation.suggestedRevision || !Array.isArray(evaluation.keywords)) {
+    if (!evaluation.minimalFix || !evaluation.microReason || !evaluation.bestDescription || !evaluation.encouragement) {
       throw new Error('Invalid evaluation format')
-    }
-    
-    if (typeof evaluation.detailScore !== 'number' || evaluation.detailScore < 1 || evaluation.detailScore > 5) {
-      throw new Error('Invalid detail score')
     }
     
     return evaluation
@@ -356,10 +381,10 @@ serve(async (req) => {
     const { error: updateError } = await supabase
       .from('attempts')
       .update({
-        detail_score: Math.round(evaluation.detailScore), // 确保是整数
-        accuracy_note: evaluation.accuracyNote,
-        suggested_revision: evaluation.suggestedRevision,
-        keywords: evaluation.keywords,
+        detail_score: 3, // 默认评分设为3，因为新的prompt不包含评分
+        accuracy_note: evaluation.microReason,
+        suggested_revision: evaluation.bestDescription,
+        keywords: [], // 新prompt不包含关键词
         latency_eval_ms: evalLatency,
       })
       .eq('id', attemptId)
@@ -407,10 +432,10 @@ serve(async (req) => {
 
     // 立即返回文本反馈响应（图像生成在后台进行）
     const response = {
-      accuracyNote: evaluation.accuracyNote,
-      detailScore: evaluation.detailScore,
-      suggestedRevision: evaluation.suggestedRevision,
-      keywords: evaluation.keywords,
+      minimalFix: evaluation.minimalFix,
+      microReason: evaluation.microReason,
+      bestDescription: evaluation.bestDescription,
+      encouragement: evaluation.encouragement,
       imageUrl: null,  // 图像将通过轮询获取
       attemptId: attemptId
     }

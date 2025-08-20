@@ -55,7 +55,7 @@ export default function Practice() {
   
   // Word count validation
   const wordCount = inputText.trim().split(/\s+/).filter(word => word.length > 0).length
-  const isValidWordCount = wordCount >= 10
+  const isValidWordCount = wordCount >= 3
   const hasError = inputText.length > 0 && !isValidWordCount
   const canSubmit = usePracticeStore(state => getCanSubmit(state, wordCount))
 
@@ -163,7 +163,7 @@ export default function Practice() {
           {hasError && (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>
-                Please use at least 10 words
+                Please use at least 3 words
               </Text>
             </View>
           )}

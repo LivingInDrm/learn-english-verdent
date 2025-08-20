@@ -77,52 +77,34 @@ export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({
         <View style={styles.feedbackContainer}>
           <Text style={styles.feedbackTitle}>AI反馈</Text>
           
-          {/* 评分 */}
-          <View style={styles.scoreContainer}>
-            <Text style={styles.scoreLabel}>详细度评分</Text>
-            <View style={styles.scoreDisplay}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Text
-                  key={star}
-                  style={[
-                    styles.star,
-                    { color: star <= store.feedbackData!.detailScore ? '#FFD700' : '#E5E5EA' }
-                  ]}
-                >
-                  ★
-                </Text>
-              ))}
-              <Text style={styles.scoreText}>{store.feedbackData.detailScore}/5</Text>
-            </View>
-          </View>
-
-          {/* 准确性提示 */}
-          {store.feedbackData.accuracyNote && (
-            <View style={styles.noteContainer}>
-              <Text style={styles.noteLabel}>准确性提示</Text>
-              <Text style={styles.noteText}>{store.feedbackData.accuracyNote}</Text>
+          {/* 最小修正 */}
+          {store.feedbackData.minimalFix && (
+            <View style={styles.correctionContainer}>
+              <Text style={styles.correctionLabel}>✏️ Minimal Fix</Text>
+              <Text style={styles.correctionText}>{store.feedbackData.minimalFix}</Text>
             </View>
           )}
 
-          {/* 建议修改 */}
-          {store.feedbackData.suggestedRevision && (
-            <View style={styles.revisionContainer}>
-              <Text style={styles.revisionLabel}>建议表达</Text>
-              <Text style={styles.revisionText}>{store.feedbackData.suggestedRevision}</Text>
+          {/* 错误解释 */}
+          {store.feedbackData.microReason && (
+            <View style={styles.reasonContainer}>
+              <Text style={styles.reasonLabel}>💡 Why This Correction</Text>
+              <Text style={styles.reasonText}>{store.feedbackData.microReason}</Text>
             </View>
           )}
 
-          {/* 关键词 */}
-          {store.feedbackData.keywords && store.feedbackData.keywords.length > 0 && (
-            <View style={styles.keywordsContainer}>
-              <Text style={styles.keywordsLabel}>关键词</Text>
-              <View style={styles.keywordsGrid}>
-                {store.feedbackData.keywords.map((keyword, index) => (
-                  <View key={index} style={styles.keywordTag}>
-                    <Text style={styles.keywordText}>{keyword}</Text>
-                  </View>
-                ))}
-              </View>
+          {/* 最佳描述 */}
+          {store.feedbackData.bestDescription && (
+            <View style={styles.bestContainer}>
+              <Text style={styles.bestLabel}>🌟 Best Description</Text>
+              <Text style={styles.bestText}>{store.feedbackData.bestDescription}</Text>
+            </View>
+          )}
+
+          {/* 鼓励 */}
+          {store.feedbackData.encouragement && (
+            <View style={styles.encouragementContainer}>
+              <Text style={styles.encouragementText}>{store.feedbackData.encouragement}</Text>
             </View>
           )}
 
@@ -237,91 +219,73 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   
-  // 评分
-  scoreContainer: {
-    alignItems: 'center',
-  },
-  scoreLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#666',
-    marginBottom: 8,
-  },
-  scoreDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  star: {
-    fontSize: 20,
-  },
-  scoreText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1D1D1F',
-    marginLeft: 8,
-  },
-  
-  // 提示内容
-  noteContainer: {
-    backgroundColor: '#F8F9FA',
+  // 最小修正
+  correctionContainer: {
+    backgroundColor: '#FFF3E0',
     borderRadius: 8,
     padding: 12,
   },
-  noteLabel: {
+  correctionLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    color: '#E65100',
+    marginBottom: 6,
   },
-  noteText: {
+  correctionText: {
     fontSize: 14,
-    color: '#666',
+    color: '#333',
     lineHeight: 20,
   },
   
-  // 建议修改
-  revisionContainer: {
+  // 错误解释
+  reasonContainer: {
+    backgroundColor: '#F3E5F5',
+    borderRadius: 8,
+    padding: 12,
+  },
+  reasonLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6A1B9A',
+    marginBottom: 6,
+  },
+  reasonText: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 20,
+  },
+  
+  // 最佳描述
+  bestContainer: {
     backgroundColor: '#E8F5E8',
     borderRadius: 8,
     padding: 12,
   },
-  revisionLabel: {
+  bestLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2D7D2D',
-    marginBottom: 4,
+    color: '#2E7D32',
+    marginBottom: 6,
   },
-  revisionText: {
+  bestText: {
     fontSize: 14,
-    color: '#1D5F1D',
+    color: '#1B5E20',
     lineHeight: 20,
     fontStyle: 'italic',
   },
   
-  // 关键词
-  keywordsContainer: {
-    gap: 8,
-  },
-  keywordsLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  keywordsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  keywordTag: {
+  // 鼓励
+  encouragementContainer: {
     backgroundColor: '#E3F2FD',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
   },
-  keywordText: {
-    fontSize: 12,
-    color: '#1976D2',
+  encouragementText: {
+    fontSize: 14,
+    color: '#0D47A1',
+    lineHeight: 20,
+    textAlign: 'center',
     fontWeight: '500',
   },
   
