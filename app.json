@@ -1,12 +1,13 @@
 {
   "expo": {
-    "name": "learn-english-verdent-app",
-    "slug": "learn-english-verdent-app",
+    "name": "Describe & See",
+    "slug": "learn-english-verdent",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "scheme": "learn-english-verdent",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -24,6 +25,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-router"
+    ]
   }
 }
