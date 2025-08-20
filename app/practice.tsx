@@ -117,13 +117,6 @@ export default function Practice() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          {/* Task Prompt */}
-          <View style={styles.promptContainer}>
-            <Text style={styles.promptText}>
-              Describe this scene in English in 2–3 sentences.
-            </Text>
-          </View>
-
           {/* Image Area */}
           <View style={styles.imageContainer}>
             {isLoadingScene || !currentScene ? (
@@ -146,7 +139,7 @@ export default function Practice() {
               style={styles.textInput}
               value={inputText}
               onChangeText={setInputText}
-              placeholder="Start typing your description here..."
+              placeholder="Describe this scene in English in 2–3 sentences."
               placeholderTextColor="#999"
               multiline
               textAlignVertical="top"
@@ -249,26 +242,6 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     padding: 16,
-  },
-  promptContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  promptText: {
-    fontSize: 16,
-    color: '#1D1D1F',
-    fontWeight: '600',
-    textAlign: 'center',
   },
   imageContainer: {
     marginBottom: 16,
