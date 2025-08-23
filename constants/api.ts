@@ -159,6 +159,36 @@ export async function transcribeAudio(
   })
 }
 
+// Text-to-speech interface
+export interface TTSRequest {
+  text: string
+  voice?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer'
+  speed?: number
+}
+
+export interface TTSResponse {
+  audioUrl: string
+  duration?: number
+}
+
+// Convert text to speech using OpenAI TTS
+export async function textToSpeech(
+  text: string,
+  voice?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer',
+  speed?: number
+): Promise<TTSResponse> {
+  const request: TTSRequest = {
+    text,
+    voice: voice || 'nova',
+    speed: speed || 1.0,
+  }
+
+  return apiRequest<TTSResponse>('/tts', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  })
+}
+
 // 重试机制配置
 export interface RetryConfig {
   maxRetries: number

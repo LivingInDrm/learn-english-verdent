@@ -9,6 +9,7 @@ import {
 } from 'react-native'
 import { Image } from 'expo-image'
 import { usePracticeStore } from '../constants/practiceStore'
+import { SpeakButton } from './SpeakButton'
 
 const { width: screenWidth } = Dimensions.get('window')
 const generatedImageAspectRatio = 16 / 9
@@ -80,7 +81,13 @@ export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({
           {/* 最小修正 */}
           {store.feedbackData.minimalFix && (
             <View style={styles.correctionContainer}>
-              <Text style={styles.correctionLabel}>✏️ Minimal Fix</Text>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.correctionLabel}>✏️ Minimal Fix</Text>
+                <SpeakButton 
+                  text={store.feedbackData.minimalFix}
+                  size="small"
+                />
+              </View>
               <Text style={styles.correctionText}>{store.feedbackData.minimalFix}</Text>
             </View>
           )}
@@ -96,7 +103,13 @@ export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({
           {/* 最佳描述 */}
           {store.feedbackData.bestDescription && (
             <View style={styles.bestContainer}>
-              <Text style={styles.bestLabel}>🌟 Best Description</Text>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.bestLabel}>🌟 Best Description</Text>
+                <SpeakButton 
+                  text={store.feedbackData.bestDescription}
+                  size="small"
+                />
+              </View>
               <Text style={styles.bestText}>{store.feedbackData.bestDescription}</Text>
             </View>
           )}
@@ -219,6 +232,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   
+  // Section header for items with speak button
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  
   // 最小修正
   correctionContainer: {
     backgroundColor: '#FFF3E0',
@@ -229,7 +250,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#E65100',
-    marginBottom: 6,
   },
   correctionText: {
     fontSize: 14,
@@ -265,7 +285,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#2E7D32',
-    marginBottom: 6,
   },
   bestText: {
     fontSize: 14,
