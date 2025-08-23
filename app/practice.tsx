@@ -18,6 +18,7 @@ import { debugSceneManager } from '../constants/debugSceneManager'
 import { useSubmitDescriptionMutation } from '../constants/queryClient'
 import { usePracticeStore, getCanSubmit } from '../constants/practiceStore'
 import { FeedbackPanel } from '../components/FeedbackPanel'
+import { VoiceInputButton } from '../components/VoiceInputButton'
 
 const { width: screenWidth } = Dimensions.get('window')
 const imageAspectRatio = 16 / 9
@@ -32,7 +33,12 @@ export default function Practice() {
   const { 
     feedbackStatus, 
     lastSubmittedText, 
-    resetFeedback 
+    resetFeedback,
+    isRecording,
+    isTranscribing,
+    isSubmitting,
+    setRecording,
+    setTranscribing
   } = usePracticeStore()
   const submitMutation = useSubmitDescriptionMutation()
   
@@ -135,18 +141,31 @@ export default function Practice() {
 
           {/* Input Area */}
           <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.textInput}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder="Describe this scene in English in 2–3 sentences."
-              placeholderTextColor="#999"
-              multiline
-              textAlignVertical="top"
-              autoCorrect={false}
-              spellCheck={false}
-              editable={!isLoadingScene}
-            />
+            <View style={styles.inputRow}>
+              <TextInput
+                style={[styles.textInput, { flex: 1 }]}
+                value={inputText}
+                onChangeText={setInputText}
+                placeholder="Describe this scene in English in 2–3 sentences."
+                placeholderTextColor="#999"
+                multiline
+                textAlignVertical="top"
+                autoCorrect={false}
+                spellCheck={false}
+                editable={!isLoadingScene && !isRecording}
+              />
+              <View style={styles.voiceButtonContainer}>
+                <VoiceInputButton
+                  onTranscriptionComplete={(text) => {
+                    setInputText(text)
+                    setTranscribing(false)
+                  }}
+                  onRecordingStateChange={setRecording}
+                  disabled={isLoadingScene || isSubmitting}
+                  isTranscribing={isTranscribing}
+                />
+              </View>
+            </View>
             
             {/* Word Count Display */}
             <View style={styles.wordCountContainer}>
@@ -174,14 +193,14 @@ export default function Practice() {
             <TouchableOpacity
               style={[
                 styles.sendButton,
-                { backgroundColor: canSubmit && !isLoadingScene ? '#007AFF' : '#C7C7CC' }
+                { backgroundColor: canSubmit && !isLoadingScene && !isRecording ? '#007AFF' : '#C7C7CC' }
               ]}
               onPress={handleSubmit}
-              disabled={!canSubmit || isLoadingScene}
+              disabled={!canSubmit || isLoadingScene || isRecording}
             >
               <Text style={[
                 styles.sendButtonText,
-                { color: canSubmit && !isLoadingScene ? '#FFFFFF' : '#8E8E93' }
+                { color: canSubmit && !isLoadingScene && !isRecording ? '#FFFFFF' : '#8E8E93' }
               ]}>
                 Send
               </Text>
@@ -276,12 +295,22 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
   textInput: {
     fontSize: 16,
     color: '#1D1D1F',
     minHeight: 44,
     textAlignVertical: 'top',
     lineHeight: 22,
+  },
+  voiceButtonContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
   },
   wordCountContainer: {
     marginTop: 8,

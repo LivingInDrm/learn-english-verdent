@@ -42,12 +42,18 @@ interface PracticeState {
   pollingAttemptId: string | null
   pollingTimer: NodeJS.Timeout | null
   
+  // 语音输入相关状态
+  isRecording: boolean
+  isTranscribing: boolean
+  
   // Actions
   setFeedbackStatus: (status: FeedbackStatus) => void
   setFeedbackData: (data: FeedbackData | null) => void
   setError: (error: ErrorInfo | null) => void
   setSubmitting: (isSubmitting: boolean) => void
   setLastSubmittedText: (text: string) => void
+  setRecording: (isRecording: boolean) => void
+  setTranscribing: (isTranscribing: boolean) => void
   
   // 高级actions
   startSubmission: (text: string) => void
@@ -71,6 +77,8 @@ export const usePracticeStore = create<PracticeState>()(
     lastSubmittedText: '',
     pollingAttemptId: null,
     pollingTimer: null,
+    isRecording: false,
+    isTranscribing: false,
 
     // 基础setters
     setFeedbackStatus: (status) => set({ feedbackStatus: status }),
@@ -78,6 +86,8 @@ export const usePracticeStore = create<PracticeState>()(
     setError: (error) => set({ error }),
     setSubmitting: (isSubmitting) => set({ isSubmitting }),
     setLastSubmittedText: (text) => set({ lastSubmittedText: text }),
+    setRecording: (isRecording) => set({ isRecording }),
+    setTranscribing: (isTranscribing) => set({ isTranscribing }),
 
     // 开始提交流程
     startSubmission: (text) => {

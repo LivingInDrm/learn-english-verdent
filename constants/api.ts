@@ -131,6 +131,34 @@ export async function checkNetworkStatus(): Promise<boolean> {
   }
 }
 
+// Audio transcription interface
+export interface TranscribeRequest {
+  audio: string // Base64 encoded audio data
+  mimeType: string // MIME type of the audio
+}
+
+export interface TranscribeResponse {
+  text: string
+  language?: string
+  duration?: number
+}
+
+// Transcribe audio to text using OpenAI Whisper
+export async function transcribeAudio(
+  audioBase64: string,
+  mimeType: string
+): Promise<TranscribeResponse> {
+  const request: TranscribeRequest = {
+    audio: audioBase64,
+    mimeType,
+  }
+
+  return apiRequest<TranscribeResponse>('/transcribe', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  })
+}
+
 // 重试机制配置
 export interface RetryConfig {
   maxRetries: number
