@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ interface FeedbackPanelProps {}
 
 export const FeedbackPanel: React.FC<FeedbackPanelProps> = () => {
   const store = usePracticeStore()
+  const [isReasonExpanded, setIsReasonExpanded] = useState(false)
   
   // 如果没有反馈状态，不显示面板
   if (store.feedbackStatus === 'idle') {
@@ -70,12 +71,26 @@ export const FeedbackPanel: React.FC<FeedbackPanelProps> = () => {
             </View>
           )}
 
-          {/* 错误解释 */}
+          {/* 错误解释 - 可折叠 */}
           {store.feedbackData.microReason && (
-            <View style={styles.reasonContainer}>
-              <Text style={styles.reasonLabel}>💡 Why This Correction</Text>
-              <Text style={styles.reasonText}>{store.feedbackData.microReason}</Text>
-            </View>
+            <TouchableOpacity 
+              style={styles.reasonContainer}
+              onPress={() => setIsReasonExpanded(!isReasonExpanded)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.reasonHeader}>
+                <Text style={styles.reasonLabel}>💡 Why This Correction</Text>
+                <Text style={styles.expandIcon}>{isReasonExpanded ? '▼' : '▶'}</Text>
+              </View>
+              {isReasonExpanded && (
+                <Text style={styles.reasonText}>{store.feedbackData.microReason}</Text>
+              )}
+              {!isReasonExpanded && (
+                <Text style={styles.reasonTextCollapsed} numberOfLines={1}>
+                  {store.feedbackData.microReason}
+                </Text>
+              )}
+            </TouchableOpacity>
           )}
 
           {/* 最佳描述 */}
@@ -92,12 +107,6 @@ export const FeedbackPanel: React.FC<FeedbackPanelProps> = () => {
             </View>
           )}
 
-          {/* 鼓励 */}
-          {store.feedbackData.encouragement && (
-            <View style={styles.encouragementContainer}>
-              <Text style={styles.encouragementText}>{store.feedbackData.encouragement}</Text>
-            </View>
-          )}
 
           {/* 生成的图片显示 */}
           {store.feedbackStatus === 'completed' && store.feedbackData.imageUrl && (
@@ -225,16 +234,33 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
   },
+  reasonHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
   reasonLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: '#6A1B9A',
-    marginBottom: 6,
+  },
+  expandIcon: {
+    fontSize: 12,
+    color: '#6A1B9A',
+    fontWeight: '600',
   },
   reasonText: {
     fontSize: 14,
     color: '#333',
     lineHeight: 20,
+    marginTop: 4,
+  },
+  reasonTextCollapsed: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 20,
+    opacity: 0.7,
   },
   
   // 最佳描述
@@ -253,21 +279,6 @@ const styles = StyleSheet.create({
     color: '#1B5E20',
     lineHeight: 20,
     fontStyle: 'italic',
-  },
-  
-  // 鼓励
-  encouragementContainer: {
-    backgroundColor: '#E3F2FD',
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-  },
-  encouragementText: {
-    fontSize: 14,
-    color: '#0D47A1',
-    lineHeight: 20,
-    textAlign: 'center',
-    fontWeight: '500',
   },
   
   // 生成图片
