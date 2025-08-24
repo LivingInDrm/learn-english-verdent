@@ -12,13 +12,13 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
-import { Scene, getSceneImageSource } from '../constants/scenes'
-import { getInitialScene, getNextScene, addSeenSceneId } from '../constants/sceneManager'
+import { Scene, getSceneImageSource, scenes } from '../constants/scenes'
+import { getInitialScene, getNextScene, addSeenSceneId, getSeenSceneIds } from '../constants/sceneManager'
 import { debugSceneManager } from '../constants/debugSceneManager'
 import { useSubmitDescriptionMutation } from '../constants/queryClient'
 import { usePracticeStore, getCanSubmit } from '../constants/practiceStore'
 import { FeedbackPanel } from '../components/FeedbackPanel'
-import { VoiceInputButton } from '../components/VoiceInputButton'
+import { BottomControlBar } from '../components/BottomControlBar'
 
 const { width: screenWidth } = Dimensions.get('window')
 const imageAspectRatio = 16 / 9
@@ -32,13 +32,10 @@ export default function Practice() {
   // Store和mutation hooks
   const { 
     feedbackStatus, 
-    lastSubmittedText, 
     resetFeedback,
     isRecording,
-    isTranscribing,
-    isSubmitting,
-    setRecording,
-    setTranscribing
+    lastSubmittedText,
+    isSubmitting
   } = usePracticeStore()
   const submitMutation = useSubmitDescriptionMutation()
   
@@ -63,7 +60,10 @@ export default function Practice() {
   const wordCount = inputText.trim().split(/\s+/).filter(word => word.length > 0).length
   const isValidWordCount = wordCount >= 3
   const hasError = inputText.length > 0 && !isValidWordCount
-  const canSubmit = usePracticeStore(state => getCanSubmit(state, wordCount))
+  // Check if text has changed from last submission
+  const hasTextChanged = inputText.trim() !== lastSubmittedText.trim()
+  const baseCanSubmit = usePracticeStore(state => getCanSubmit(state, wordCount))
+  const canSubmit = baseCanSubmit && hasTextChanged
 
   const handleSubmit = async () => {
     if (!canSubmit || !currentScene) return
@@ -78,13 +78,6 @@ export default function Practice() {
     await addSeenSceneId(currentScene.id)
   }
 
-  const handleTryAgain = () => {
-    // 恢复上次提交的文本用于编辑
-    if (lastSubmittedText) {
-      setInputText(lastSubmittedText)
-    }
-    resetFeedback()
-  }
 
   const handleNextImage = async () => {
     if (!currentScene) return
@@ -99,11 +92,71 @@ export default function Practice() {
       // 重置状态
       setInputText('')
       resetFeedback()
+      // Clear last submitted text when moving to new scene
+      usePracticeStore.getState().setLastSubmittedText('')
       
     } catch (error) {
       console.error('Failed to load next scene:', error)
     } finally {
       setIsLoadingScene(false)
+    }
+  }
+
+  const handlePrevScene = async () => {
+    if (!currentScene) return
+    
+    try {
+      setIsLoadingScene(true)
+      
+      // Get previous scene (random from seen scenes or just another random scene)
+      const seenIds = await getSeenSceneIds()
+      const availableScenes = seenIds.length > 1 
+        ? scenes.filter(s => seenIds.includes(s.id) && s.id !== currentScene.id)
+        : scenes.filter(s => s.id !== currentScene.id)
+      
+      if (availableScenes.length > 0) {
+        const randomIndex = Math.floor(Math.random() * availableScenes.length)
+        setCurrentScene(availableScenes[randomIndex])
+      } else {
+        // Fallback to any different scene
+        const nextScene = await getNextScene(currentScene.id)
+        setCurrentScene(nextScene)
+      }
+      
+      // 重置状态
+      setInputText('')
+      resetFeedback()
+      // Clear last submitted text when moving to new scene
+      usePracticeStore.getState().setLastSubmittedText('')
+      
+    } catch (error) {
+      console.error('Failed to load previous scene:', error)
+    } finally {
+      setIsLoadingScene(false)
+    }
+  }
+
+  const handleVoiceSubmit = (text: string) => {
+    // Set the text and immediately submit
+    setInputText(text)
+    
+    // Check word count for the voice input
+    const words = text.trim().split(/\s+/).filter(word => word.length > 0)
+    const voiceWordCount = words.length
+    
+    // Get last submitted text from store
+    const store = usePracticeStore.getState()
+    const isDifferentFromLast = text.trim() !== store.lastSubmittedText.trim()
+    
+    if (voiceWordCount >= 3 && currentScene && isDifferentFromLast) {
+      // Submit immediately if valid and different from last submission
+      submitMutation.mutate({
+        sceneId: currentScene.id,
+        text: text,
+      })
+      
+      // Mark scene as seen
+      addSeenSceneId(currentScene.id)
     }
   }
 
@@ -122,7 +175,10 @@ export default function Practice() {
         style={styles.content}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Image Area */}
           <View style={styles.imageContainer}>
             {isLoadingScene || !currentScene ? (
@@ -154,17 +210,19 @@ export default function Practice() {
                 spellCheck={false}
                 editable={!isLoadingScene && !isRecording}
               />
-              <View style={styles.voiceButtonContainer}>
-                <VoiceInputButton
-                  onTranscriptionComplete={(text) => {
-                    setInputText(text)
-                    setTranscribing(false)
-                  }}
-                  onRecordingStateChange={setRecording}
-                  disabled={isLoadingScene || isSubmitting}
-                  isTranscribing={isTranscribing}
-                />
-              </View>
+              <TouchableOpacity
+                style={[
+                  styles.sendIconButton,
+                  (!canSubmit || isLoadingScene || isRecording) && styles.sendIconButtonDisabled
+                ]}
+                onPress={handleSubmit}
+                disabled={!canSubmit || isLoadingScene || isRecording}
+              >
+                <Text style={[
+                  styles.sendIconText,
+                  (!canSubmit || isLoadingScene || isRecording) && styles.sendIconTextDisabled
+                ]}>›</Text>
+              </TouchableOpacity>
             </View>
             
             {/* Word Count Display */}
@@ -187,50 +245,9 @@ export default function Practice() {
             </View>
           )}
 
-          {/* Action Buttons */}
-          <View style={styles.buttonContainer}>
-            {/* Send Button */}
-            <TouchableOpacity
-              style={[
-                styles.sendButton,
-                { backgroundColor: canSubmit && !isLoadingScene && !isRecording ? '#007AFF' : '#C7C7CC' }
-              ]}
-              onPress={handleSubmit}
-              disabled={!canSubmit || isLoadingScene || isRecording}
-            >
-              <Text style={[
-                styles.sendButtonText,
-                { color: canSubmit && !isLoadingScene && !isRecording ? '#FFFFFF' : '#8E8E93' }
-              ]}>
-                Send
-              </Text>
-            </TouchableOpacity>
-
-            {/* Next Image Button - 只在没有反馈时显示 */}
-            {feedbackStatus === 'idle' && (
-              <TouchableOpacity
-                style={[
-                  styles.nextButton,
-                  { backgroundColor: isLoadingScene ? '#C7C7CC' : '#34C759' }
-                ]}
-                onPress={handleNextImage}
-                disabled={isLoadingScene}
-              >
-                <Text style={[
-                  styles.nextButtonText,
-                  { color: isLoadingScene ? '#8E8E93' : '#FFFFFF' }
-                ]}>
-                  Next Image
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
 
           {/* 反馈面板 */}
-          <FeedbackPanel
-            onTryAgain={handleTryAgain}
-            onNextImage={handleNextImage}
-          />
+          <FeedbackPanel />
 
           {/* Debug Button - Remove in production */}
           {__DEV__ && (
@@ -246,6 +263,14 @@ export default function Practice() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+      
+      {/* Fixed Bottom Control Bar */}
+      <BottomControlBar
+        onPrevScene={handlePrevScene}
+        onNextScene={handleNextImage}
+        onVoiceSubmit={handleVoiceSubmit}
+        disabled={isLoadingScene || feedbackStatus === 'submitting'}
+      />
     </SafeAreaView>
   )
 }
@@ -261,6 +286,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     padding: 16,
+    paddingBottom: 100, // Add space for fixed bottom bar
   },
   imageContainer: {
     marginBottom: 16,
@@ -307,10 +333,26 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     lineHeight: 22,
   },
-  voiceButtonContainer: {
+  sendIconButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#007AFF',
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
+  },
+  sendIconButtonDisabled: {
+    backgroundColor: '#C7C7CC',
+  },
+  sendIconText: {
+    fontSize: 32,
+    color: '#FFFFFF',
+    fontWeight: '300',
+    transform: [{ translateY: -2 }],
+  },
+  sendIconTextDisabled: {
+    color: '#8E8E93',
   },
   wordCountContainer: {
     marginTop: 8,
@@ -328,31 +370,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FF3B30',
     fontWeight: '500',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  sendButton: {
-    flex: 1,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  sendButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  nextButton: {
-    flex: 1,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  nextButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
   },
   debugButton: {
     backgroundColor: '#FF9500',

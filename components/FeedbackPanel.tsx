@@ -15,15 +15,9 @@ const { width: screenWidth } = Dimensions.get('window')
 const generatedImageAspectRatio = 16 / 9
 const generatedImageHeight = (screenWidth - 64) / generatedImageAspectRatio // 减去容器padding
 
-interface FeedbackPanelProps {
-  onTryAgain: () => void
-  onNextImage: () => void
-}
+interface FeedbackPanelProps {}
 
-export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({
-  onTryAgain,
-  onNextImage,
-}) => {
+export const FeedbackPanel: React.FC<FeedbackPanelProps> = () => {
   const store = usePracticeStore()
   
   // 如果没有反馈状态，不显示面板
@@ -50,22 +44,6 @@ export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({
         <View style={styles.errorContainer}>
           <Text style={styles.errorTitle}>出现错误</Text>
           <Text style={styles.errorMessage}>{store.error.message}</Text>
-          
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.retryButton]}
-              onPress={onTryAgain}
-            >
-              <Text style={styles.retryButtonText}>重试</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.button, styles.nextButton]}
-              onPress={onNextImage}
-            >
-              <Text style={styles.nextButtonText}>下一张图片</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
     )
@@ -151,22 +129,6 @@ export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({
             </View>
           )}
 
-          {/* 操作按钮 */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.tryAgainButton]}
-              onPress={onTryAgain}
-            >
-              <Text style={styles.tryAgainButtonText}>重新描述</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.button, styles.nextButton]}
-              onPress={onNextImage}
-            >
-              <Text style={styles.nextButtonText}>下一张图片</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
     )
@@ -354,42 +316,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0369A1',
     fontWeight: '500',
-  },
-  
-  // 按钮
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  button: {
-    flex: 1,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  retryButton: {
-    backgroundColor: '#FF3B30',
-  },
-  retryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  tryAgainButton: {
-    backgroundColor: '#007AFF',
-  },
-  tryAgainButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  nextButton: {
-    backgroundColor: '#34C759',
-  },
-  nextButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
   },
 })
